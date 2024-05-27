@@ -39,7 +39,16 @@ var FSHADER_SOURCE =`
   varying vec4 v_VertPos;
   uniform bool u_lightOn;
   uniform vec4 u_lightColor;
-  uniform vec3 u_spotLightPos;
+  uniform bool u_spotlightOn;
+
+  uniform vec3 u_spotlightPosition;
+  uniform vec3 u_spotlightDirection;
+  uniform vec4 u_spotlightColor;
+  uniform float u_spotlightCutoff;
+  uniform float u_spotlightDecay;
+
+
+
   void main(){
     if (u_whichTexture == -3) {
         gl_FragColor = vec4((v_Normal+1.0)/2.0, 1.0);
@@ -59,8 +68,7 @@ var FSHADER_SOURCE =`
         gl_FragColor = vec4(1,.2,.2,1);
     }
 
-    vec3 lightVector = u_spotLightPos - vec3(v_VertPos);
-    lightVector = u_lightPos - vec3(v_VertPos);
+    vec3 lightVector = u_lightPos - vec3(v_VertPos);
     float r = length(lightVector);
     // if (r<1.0){
     //     gl_FragColor = vec4(1, 0, 0, 1);
@@ -85,6 +93,24 @@ var FSHADER_SOURCE =`
             gl_FragColor = vec4(specular + diffuse + ambient, 1.0)*u_lightColor;
         } else {
             gl_FragColor = vec4(diffuse + ambient, 1.0);
+        }
+    }
+
+
+
+
+
+    // Calculate direction to light
+    if (u_spotlightOn) {
+        vec3 lightDir = normalize(u_spotlightPosition - vec3(v_VertPos));
+        float theta = dot(lightDir, normalize(-u_spotlightDirection));
+
+        if (theta > u_spotlightCutoff) {
+            float intensity = pow(theta, u_spotlightDecay);
+            vec3 spotlightEffect = intensity * vec3(u_spotlightColor);
+
+            vec3 spotlightDiffuse = max(dot(v_Normal, lightDir), 0.0) * spotlightEffect;
+            gl_FragColor.rgb += spotlightDiffuse;
         }
     }
     
@@ -112,8 +138,17 @@ let u_lightPos;
 let u_cameraPos;
 let u_lightOn;
 let u_lightColor;
-let u_spotLightPos;
+let u_spotlightOn;
 let camera;
+
+
+
+let u_spotlightPosition;
+let u_spotlightDirection;
+let u_spotlightColor;
+let u_spotlightCutoff;
+let u_spotlightDecay;
+
 
 function setupWebGL(){
     // Retrieve <canvas> element
@@ -332,12 +367,6 @@ function connectVariablesToGLSL(){
         return;
     }
 
-    u_spotLightPos = gl.getUniformLocation(gl.program, 'u_spotLightPos');
-    if (!u_spotLightPos) {
-        console.log('Failed to get the storage location of u_spotLightPos');
-        return;
-    }
-
     u_lightOn = gl.getUniformLocation(gl.program, 'u_lightOn');
     if (!u_lightOn) {
         console.log('Failed to get the storage location of u_lightOn');
@@ -347,6 +376,12 @@ function connectVariablesToGLSL(){
     u_lightColor = gl.getUniformLocation(gl.program, 'u_lightColor');
     if (!u_lightColor) {
         console.log('Failed to get the storage location of u_lightColor');
+        return;
+    }
+
+    u_spotlightOn = gl.getUniformLocation(gl.program, 'u_spotlightOn');
+    if (!u_spotlightOn) {
+        console.log('Failed to get the storage location of u_spotlightOn');
         return;
     }
 
@@ -405,6 +440,41 @@ function connectVariablesToGLSL(){
         console.log('Failed to get the storage location of u_Sampler3');
         return;
     }
+
+
+
+    
+
+
+    u_spotlightPosition = gl.getUniformLocation(gl.program, 'u_spotlightPosition');
+    if (!u_spotlightPosition) {
+        console.log('Failed to get the storage location of u_spotlightPosition');
+        return;
+    }
+    u_spotlightDirection = gl.getUniformLocation(gl.program, 'u_spotlightDirection');
+    if (!u_spotlightDirection) {
+        console.log('Failed to get the storage location of u_spotlightDirection');
+        return;
+    }
+    u_spotlightColor = gl.getUniformLocation(gl.program, 'u_spotlightColor');   
+    if (!u_spotlightColor) {
+        console.log('Failed to get the storage location of u_spotlightColor');
+        return;
+    }
+    u_spotlightCutoff = gl.getUniformLocation(gl.program, 'u_spotlightCutoff');
+    if (!u_spotlightCutoff) {
+        console.log('Failed to get the storage location of u_spotlightCutoff');
+        return;
+    }
+    u_spotlightDecay = gl.getUniformLocation(gl.program, 'u_spotlightDecay');
+    if (!u_spotlightDecay) {
+        console.log('Failed to get the storage location of u_spotlightDecay');
+        return;
+    }
+
+
+
+
 
     var identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
@@ -502,6 +572,14 @@ function renderAllShapes(){
     // Clear <canvas>   
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    let spotlight = {
+        position: [0.0, 2.0, 0.0], // Position in world space
+        direction: [0.0, -1.0, 0.0], // Direction the light is pointing
+        color: [1.0, 1.0, 1.0, 1.0], // RGBA color of the light
+        cutoff: Math.cos(Math.PI / 4), // Cosine of the cutoff angle
+        decay: 1.0 // Decay factor
+    };
+
 
     // drawMap();
 
@@ -509,10 +587,17 @@ function renderAllShapes(){
     // drawTexturedPlane(3, -27.5, 0.25, -35.75);
 
     gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
-    gl.uniform3f(u_spotLightPos, g_spotlightPos[0], g_spotlightPos[1], g_spotlightPos[2]);
     gl.uniform3f(u_cameraPos, camera.eye.elements[0], camera.eye.elements[1], camera.eye.elements[2]);
     gl.uniform1i(u_lightOn, g_lightOn);
+    gl.uniform1i(u_spotlightOn, g_spotLightOn);
     gl.uniform4f(u_lightColor, ...g_lightColor);
+
+
+    gl.uniform3fv(u_spotlightPosition, new Float32Array(spotlight.position));
+    gl.uniform3fv(u_spotlightDirection, new Float32Array(spotlight.direction));
+    gl.uniform4fv(u_spotlightColor, new Float32Array(spotlight.color));
+    gl.uniform1f(u_spotlightCutoff, spotlight.cutoff);
+    gl.uniform1f(u_spotlightDecay, spotlight.decay);
 
     var light = new Cube();
     light.color = [2, 2, 0, 1];
@@ -770,8 +855,7 @@ let g_eyeBallAngle = 0;
 let g_lightPos = [2, 3, -2]
 let g_lightOn = true;
 let g_lightColor = [1, 1, 1, 1];
-let g_set_Location = 0;
-let g_spotlightPos = [10.125, g_set_Location+0.4, 7.15];
+let g_spotLightOn = false;
 
 
 function addActionsForHtmlUI(){
@@ -788,25 +872,8 @@ function addActionsForHtmlUI(){
     document.getElementById('lightOn').onclick = function() {g_lightOn = true;};
     document.getElementById('lightOff').onclick = function() {g_lightOn = false;};
 
-    document.getElementById('L_C_S_R').addEventListener('mousemove', function(ev) {if(ev.buttons == 1){g_lightColor[0] = this.value/255;}});
-    document.getElementById('L_C_S_G').addEventListener('mousemove', function(ev) {if(ev.buttons == 1){g_lightColor[1] = this.value/255;}});
-    document.getElementById('L_C_S_B').addEventListener('mousemove', function(ev) {if(ev.buttons == 1){g_lightColor[2] = this.value/255;}});
-
-    document.getElementById('SpotlightSlideX').addEventListener('mousemove', function (ev){
-        if(ev.buttons === 1){
-            g_spotlightPos[0] = this.value/10;
-        }
-    });
-    document.getElementById('SpotlightSlideY').addEventListener('mousemove', function (ev){
-        if(ev.buttons === 1){
-            g_spotlightPos[1]= this.value/10;
-        }
-    });
-    document.getElementById('SpotlightSlideZ').addEventListener('mousemove', function (ev){
-        if(ev.buttons === 1){
-            g_spotlightPos[2] = this.value/10;
-        }
-    });
+    document.getElementById('spotLightOn').onclick = function() {g_spotLightOn = true;};
+    document.getElementById('spotLightOff').onclick = function() {g_spotLightOn = false;};
 
     // document.getElementById('angleSlideX').addEventListener('mousemove', function () { g_globalAngleX = parseInt(this.value); renderAllShapes(); });
     // document.getElementById('angleSlideY').addEventListener('mousemove', function () { g_globalAngleY = parseInt(this.value); renderAllShapes(); });
@@ -944,17 +1011,12 @@ function tick() {
         g_runAngle = 10 * Math.sin(g_seconds);
         g_neckAngle = 5 * Math.sin(g_seconds);
         g_headAngle = 5 * Math.sin(g_seconds);
-        g_set_Location = ((Math.sin(g_seconds * 3)) / 30) - (.3);
         g_lightPos[1] = Math.cos(g_seconds)* 2;
-        g_spotlightPos[1] = Math.cos(g_seconds)* 2;
         updateAnimationAngles();
 
     }else if (shift) {
         eyeScaleX = 0.5 + 0.5 * Math.sin(2*g_seconds);
         tailRotationAngle = 20 * Math.sin(g_seconds * 3);
-    }
-    else if(g_lightOn){
-        
     }
 
     renderAllShapes();
