@@ -869,6 +869,10 @@ function addActionsForHtmlUI(){
     document.getElementById('lightSlideY').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) {g_lightPos[1] = this.value / 100; renderAllShapes(); }});
     document.getElementById('lightSlideZ').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) {g_lightPos[2] = this.value / 100; renderAllShapes(); }});
 
+    document.getElementById('L_C_S_R').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) {g_lightColor[0] = this.value / 100; renderAllShapes(); }});
+    document.getElementById('L_C_S_G').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) {g_lightColor[1] = this.value / 100; renderAllShapes(); }});
+    document.getElementById('L_C_S_B').addEventListener('mousemove', function (ev) { if (ev.buttons == 1) {g_lightColor[2] = this.value / 100; renderAllShapes(); }});
+    
     document.getElementById('lightOn').onclick = function() {g_lightOn = true;};
     document.getElementById('lightOff').onclick = function() {g_lightOn = false;};
 
