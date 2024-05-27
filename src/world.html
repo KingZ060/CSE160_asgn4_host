@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Change a point color</title>
+  </head>
+
+  <body onload="main()" onmousedown = "funcShiftKey(event)">
+    <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas"
+    </canvas>
+    <p>
+    <p id="numdot"> XXX </p>
+    <br>
+    Animation:
+    <button type="button" id="animationYellowOnButton">ON</button>
+    <button type="button" id="animationYellowOffButton">OFF</button>
+    &nbsp; &nbsp;
+    Normal:
+    <button type="button" id="normalOn">On</button>
+    <button type="button" id="normalOff">Off</button>
+    &nbsp; &nbsp;
+    Light:
+    <button type="button" id="lightOn">On</button>
+    <button type="button" id="lightOff">Off</button>
+
+    <br>
+    Light X<input type="range" min="-1000" max="1000" value="200" class="slider" id="lightSlideX">
+    Light Y<input type="range" min="-250" max="500" value="300" class="slider" id="lightSlideY">
+    Light Z<input type="range" min="-1500" max="1500" value="-200" class="slider" id="lightSlideZ">
+    <br>
+    LightColor_R<input type="range" min="0" max="255" value="255" class="slider" id="L_C_S_R">
+    LightColor_G<input type="range" min="0" max="255" value="255" class="slider" id="L_C_S_G">
+    LightColor_B<input type="range" min="0" max="255" value="255" class="slider" id="L_C_S_B">
+    <!-- Camera Angle for X <input type="range" min="-180" max="180" value="0" class="slider" id="angleSlideX"> -->
+    <!-- <br> -->
+    <!-- Camera Angle for Y<input type="range" min="-90" max="90" value="0" class="slider" id="angleSlideY"> -->
+    <!-- <br> -->
+    <br>
+    Spot_light position X:<input class="slider" id="SpotlightSlideX" max="300" min="0" type="range" value="150">
+    Spot_light position Y:<input class="slider" id="SpotlightSlideY" max="300" min="0" type="range" value="150">
+    Spot_light position Z:<input class="slider" id="SpotlightSlideZ" max="300" min="0" type="range" value="150">
+    <br>
+    Run <input type="range" min="-10" max="10" value="0" class="slider" id="runAngle">
+    <br>
+    Neck <input type="range" min="-5" max="5" value="0" class="slider" id="neckAngle">
+    <br>
+    Head <input type="range" min="-5" max="5" value="0" class="slider" id="headAngle">
+    <br>
+    Eye <input type="range" min="-10" max="10" value="0" class="slider" id="eyeAngle">
+    <br>
+    Eyeball <input type="range" min="-30" max="30" value="0" class="slider" id="eyeBallAngle">
+    <br>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="Cube.js"></script>
+    <script src="Camera.js"></script>
+
+    <script src="Point.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+    <script src="Sphere.js"></script>
+    <script src="world.js"></script>
+    <canvas id="textCanvas" width="512" height="512" style="display:none;"></canvas>
+  </body>
+  
+</html>
